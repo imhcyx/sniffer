@@ -42,6 +42,26 @@ struct iphdr {
     uint32_t daddr;							// destination ip address
 };
 
+struct icmphdr {
+    uint8_t	type;				// type of icmp message
+    uint8_t	code;				// icmp code
+    uint16_t	checksum;
+    uint16_t icmp_identifier;	// icmp identifier, used in icmp echo request
+    uint16_t icmp_sequence;		// icmp sequence, used in icmp echo request
+}__attribute__((packed));
+
+#define ICMP_ECHOREQUEST		8       // echo request
+#define ICMP_ECHOREPLY          0       // echo reply
+#define ICMP_DEST_UNREACH       3       // destination unreachable
+#define ICMP_TIME_EXCEEDED      11      // time exceeded
+
+// codes for UNREACH
+#define ICMP_NET_UNREACH        0       // network unreachable
+#define ICMP_HOST_UNREACH       1       // host unreachable
+
+// code for TIME_EXCEEDED
+#define ICMP_EXC_TTL            0       // ttl count exceeded
+
 class PacketInfo {
 public:
 
@@ -129,7 +149,7 @@ protected:
     }
 };
 
-class IPv4PacketInfo : public PacketInfo
+class IPPacketInfo : public PacketInfo
 {
 public:
 
@@ -137,29 +157,99 @@ public:
 
     virtual QString getSource(void) const
     {
-        return ipv4Str(&ipv4Header->saddr);
+        return ipv4Str(&ipHeader->saddr);
     }
 
     virtual QString getDest(void) const
     {
-        return ipv4Str(&ipv4Header->daddr);
+        return ipv4Str(&ipHeader->daddr);
     }
 
     virtual QString getInfo(void) const
     {
-        return QString("IPv4 packet");
+        return QString("IPv4 packet of type 0x%1").arg(ipHeader->protocol, 0, 16);
     }
 
 protected:
-    const iphdr *ipv4Header;
-    const char *ipv4Payload;
+    const iphdr *ipHeader;
+    const char *ipPayload;
 
-    IPv4PacketInfo(PacketInfo &info)
+    IPPacketInfo(PacketInfo &info)
         : PacketInfo(info)
     {
-        ipv4Header = (iphdr*)etherPayload;
-        ipv4Payload = etherPayload + (ipv4Header->ihl << 2);
+        ipHeader = (iphdr*)etherPayload;
+        ipPayload = etherPayload + (ipHeader->ihl << 2);
     }
+};
+
+class ICMPPacketInfo : public IPPacketInfo
+{
+public:
+
+    static PacketInfo *parse(PacketInfo *info);
+
+    virtual QString getInfo(void) const
+    {
+        const char *type;
+        switch(icmpHeader->type) {
+        case ICMP_ECHOREQUEST:      type = "echo request";              break;
+        case ICMP_ECHOREPLY:        type = "echo reply";                break;
+        case ICMP_DEST_UNREACH:
+            switch (icmpHeader->code) {
+            case ICMP_NET_UNREACH:  type = "net unreach";               break;
+            case ICMP_HOST_UNREACH: type = "host unreach";              break;
+            default:                type = "dest unreach unknown code"; break;
+            }
+            break;
+        case ICMP_TIME_EXCEEDED:    type = "time exceeded";             break;
+        default:                    type = "unknown type";              break;
+        }
+
+        return QString("ICMP %1").arg(type);
+    }
+
+protected:
+    const icmphdr *icmpHeader;
+    const char *icmpPayload;
+
+    ICMPPacketInfo(PacketInfo &info)
+        : IPPacketInfo(info)
+    {
+        icmpHeader = (icmphdr*)ipPayload;
+        icmpPayload = ipPayload + sizeof(icmphdr);
+    }
+};
+
+class TCPPacketInfo : public IPPacketInfo
+{
+public:
+
+    static PacketInfo *parse(PacketInfo *info);
+
+    virtual QString getInfo(void) const
+    {
+        return QString("TCP packet");
+    }
+
+protected:
+    TCPPacketInfo(PacketInfo &info)
+        : IPPacketInfo(info) {}
+};
+
+class UDPPacketInfo : public IPPacketInfo
+{
+public:
+
+    static PacketInfo *parse(PacketInfo *info);
+
+    virtual QString getInfo(void) const
+    {
+        return QString("UDP packet");
+    }
+
+protected:
+    UDPPacketInfo(PacketInfo &info)
+        : IPPacketInfo(info) {}
 };
 
 class IPv6PacketInfo : public PacketInfo
