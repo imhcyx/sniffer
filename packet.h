@@ -8,6 +8,21 @@
 #include <net/ethernet.h>
 #include <arpa/inet.h>
 
+#define ARPOP_REQUEST 1
+#define ARPOP_REPLY 2
+
+struct ether_arp {
+    uint16_t    arp_hrd;		// format of hardware address, should be 0x01
+    uint16_t    arp_pro;		// format of protocol address, should be 0x0800
+    uint8_t     arp_hln;		// length of hardware address, should be 6
+    uint8_t     arp_pln;		// length of protocol address, should be 4
+    uint16_t    arp_op;			// ARP opcode (command)
+    uint8_t     arp_sha[ETH_ALEN];	// sender hardware address
+    uint32_t	arp_spa;		// sender protocol address
+    uint8_t     arp_tha[ETH_ALEN];	// target hardware address
+    uint32_t	arp_tpa;		// target protocol address
+} __attribute__ ((packed));
+
 class PacketInfo {
 public:
 
@@ -46,7 +61,7 @@ public:
         return QString("Ethernet packet of type 0x%1").arg(ntohs(etherHeader->ether_type), 0, 16);
     }
 
-private:
+protected:
     const char *packet;
     uint32_t length;
     timeval timestamp;
@@ -70,12 +85,29 @@ public:
 
     virtual QString getInfo(void) const
     {
-        return QString("ARP packet");
+        const char *opstr;
+        switch (ntohs(arpHeader->arp_op)) {
+        case ARPOP_REQUEST: opstr = "request";  break;
+        case ARPOP_REPLY:   opstr = "reply";    break;
+        default:            opstr = "unknown";  break;
+        }
+
+        return QString("ARP %1 from %2 to %3").arg(
+                    QString(opstr),
+                    ipv4Str(&arpHeader->arp_spa),
+                    ipv4Str(&arpHeader->arp_tpa));
     }
 
-private:
+protected:
+    const ether_arp *arpHeader;
+    const char *arpPayload;
+
     ARPPacketInfo(PacketInfo &info)
-        : PacketInfo(info) {}
+        : PacketInfo(info)
+    {
+        arpHeader = (ether_arp*)etherPayload;
+        arpPayload = etherPayload + sizeof(ether_arp);
+    }
 };
 
 class IPv4PacketInfo : public PacketInfo
@@ -89,7 +121,7 @@ public:
         return QString("IPv4 packet");
     }
 
-private:
+protected:
     IPv4PacketInfo(PacketInfo &info)
         : PacketInfo(info) {}
 };
@@ -105,7 +137,7 @@ public:
         return QString("IPv6 packet");
     }
 
-private:
+protected:
     IPv6PacketInfo(PacketInfo &info)
         : PacketInfo(info) {}
 };

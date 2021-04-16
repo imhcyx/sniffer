@@ -20,7 +20,7 @@ PacketInfo *PacketInfo::parse(const void *pkt, uint32_t len, const timeval &ts)
         ParserFunc parser = etherParsers.at(ntohs(p->etherHeader->ether_type));
         return parser(p);
     }
-    catch (std::out_of_range) {}
+    catch (const std::out_of_range &e) {}
 
     return p;
 }
