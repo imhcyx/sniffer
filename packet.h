@@ -23,6 +23,25 @@ struct ether_arp {
     uint32_t	arp_tpa;		// target protocol address
 } __attribute__ ((packed));
 
+struct iphdr {
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    unsigned int ihl:4;					// length of ip header
+    unsigned int version:4;				// ip version
+#elif __BYTE_ORDER == __BIG_ENDIAN
+    unsigned int version:4;				// ip version
+    unsigned int ihl:4;					// length of ip header
+#endif
+    uint8_t tos;								// type of service (usually set to 0)
+    uint16_t tot_len;						// total length of ip data
+    uint16_t id;								// ip identifier
+    uint16_t frag_off;						// the offset of ip fragment
+    uint8_t ttl;								// ttl of ip packet
+    uint8_t protocol;						// upper layer protocol, e.g. icmp, tcp, udp
+    uint16_t checksum;						// checksum of ip header
+    uint32_t saddr;							// source ip address
+    uint32_t daddr;							// destination ip address
+};
+
 class PacketInfo {
 public:
 
@@ -116,14 +135,31 @@ public:
 
     static PacketInfo *parse(PacketInfo *info);
 
+    virtual QString getSource(void) const
+    {
+        return ipv4Str(&ipv4Header->saddr);
+    }
+
+    virtual QString getDest(void) const
+    {
+        return ipv4Str(&ipv4Header->daddr);
+    }
+
     virtual QString getInfo(void) const
     {
         return QString("IPv4 packet");
     }
 
 protected:
+    const iphdr *ipv4Header;
+    const char *ipv4Payload;
+
     IPv4PacketInfo(PacketInfo &info)
-        : PacketInfo(info) {}
+        : PacketInfo(info)
+    {
+        ipv4Header = (iphdr*)etherPayload;
+        ipv4Payload = etherPayload + (ipv4Header->ihl << 2);
+    }
 };
 
 class IPv6PacketInfo : public PacketInfo
