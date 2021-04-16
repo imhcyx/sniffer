@@ -4,22 +4,7 @@
 #include <QAbstractItemModel>
 #include <QList>
 
-class PacketInfo {
-public:
-    PacketInfo(uint32_t len, const void *pkt, timeval &ts);
-    ~PacketInfo(void);
-
-    QString getTimestamp(void) const;
-    QString getSource(void) const;
-    QString getDest(void) const;
-    uint32_t getLen(void) const;
-    QString getInfo(void) const;
-
-private:
-    timeval mTs;
-    uint32_t mLen;
-    char *mPkt;
-};
+#include "packet.h"
 
 class PacketListModel : public QAbstractItemModel
 {
@@ -35,6 +20,7 @@ public:
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
 
     void appendPacket(const PacketInfo &pkt);
+    void clear();
 
 private:
     QList<PacketInfo> mPktList;

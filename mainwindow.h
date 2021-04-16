@@ -28,6 +28,8 @@ signals:
 private slots:
     void on_startButton_clicked();
     void on_stopButton_clicked();
+    void on_clearButton_clicked();
+
     void packetCaptured(PacketInfo *info);
     void errorMsg(const char *msg);
     void stateChanged(bool state);

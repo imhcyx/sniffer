@@ -27,6 +27,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    captureStartStop(false);
+    thread->exit();
+    thread->wait();
     delete cap;
     delete thread;
     delete pktlist;
@@ -55,6 +58,11 @@ void MainWindow::on_startButton_clicked()
 void MainWindow::on_stopButton_clicked()
 {
     captureStartStop(false);
+}
+
+void MainWindow::on_clearButton_clicked()
+{
+    pktlist->clear();
 }
 
 void MainWindow::packetCaptured(PacketInfo *info)

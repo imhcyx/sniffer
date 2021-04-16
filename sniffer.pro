@@ -24,7 +24,9 @@ SOURCES += \
 HEADERS += \
     capture.h \
     mainwindow.h \
-    model.h
+    model.h \
+    packet.h \
+    util.h
 
 FORMS += \
     mainwindow.ui

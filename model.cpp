@@ -10,53 +10,6 @@ static QString mColumnStrings[] = {
 
 static int const mColumnCount = sizeof(mColumnStrings) / sizeof(QString);
 
-PacketInfo::PacketInfo(uint32_t len, const void *pkt, timeval &ts)
-{
-    mTs = ts;
-    mLen = len;
-    mPkt = new char[len];
-    memcpy(mPkt, pkt, len);
-}
-
-PacketInfo::~PacketInfo(void)
-{
-    delete [] mPkt;
-}
-
-QString PacketInfo::getTimestamp(void) const
-{
-    return QString("%1.%2")
-            .arg(mTs.tv_sec)
-            .arg(mTs.tv_usec, 6, 10, QLatin1Char('0'));
-}
-
-QString PacketInfo::getSource(void) const
-{
-    return QString("");
-}
-
-QString PacketInfo::getDest(void) const
-{
-    return QString("");
-}
-
-uint32_t PacketInfo::getLen(void) const
-{
-    return mLen;
-}
-
-QString PacketInfo::getInfo(void) const
-{
-    QString buf;
-    int c = mLen > 16 ? 16 : mLen;
-
-    for (int i = 0; i < c; i++) {
-        buf.append(QString("%1 ").arg((uint8_t)mPkt[i], 2, 16, QLatin1Char('0')));
-    }
-
-    return buf;
-}
-
 PacketListModel::PacketListModel(QObject *parent)
     : QAbstractItemModel(parent)
 {
@@ -124,8 +77,16 @@ QVariant PacketListModel::headerData(int section, Qt::Orientation orientation, i
     return QVariant();
 }
 
-void PacketListModel::appendPacket(const PacketInfo &pkt) {
+void PacketListModel::appendPacket(const PacketInfo &pkt)
+{
     layoutAboutToBeChanged();
     mPktList.append(pkt);
+    layoutChanged();
+}
+
+void PacketListModel::clear()
+{
+    layoutAboutToBeChanged();
+    mPktList.clear();
     layoutChanged();
 }
