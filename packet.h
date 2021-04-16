@@ -6,31 +6,29 @@
 #include "util.h"
 
 #include <net/ethernet.h>
+#include <arpa/inet.h>
 
 class PacketInfo {
 public:
 
-    PacketInfo(uint32_t len, const void *pkt, timeval &ts)
-    {
-        mTs = ts;
-        mLen = len;
-        mPkt = new char[len];
-        memcpy(mPkt, pkt, len);
-
-        etherHeader = (ether_header*)mPkt;
-        etherPayload = mPkt + sizeof(ether_header);
-    }
+    static PacketInfo *parse(const void *pkt, uint32_t len, const timeval &ts);
 
     ~PacketInfo(void)
     {
-        delete [] mPkt;
+        // TODO: free resource somewhere
+        //delete [] packet;
     }
 
     QString getTimestamp(void) const
     {
         return QString("%1.%2")
-                .arg(mTs.tv_sec)
-                .arg(mTs.tv_usec, 6, 10, QLatin1Char('0'));
+                .arg(timestamp.tv_sec)
+                .arg(timestamp.tv_usec, 6, 10, QLatin1Char('0'));
+    }
+
+    uint32_t getLen(void) const
+    {
+        return length;
     }
 
     virtual QString getSource(void) const
@@ -43,25 +41,73 @@ public:
         return toHex(etherHeader->ether_dhost, 6, ':');
     }
 
-    uint32_t getLen(void) const
-    {
-        return mLen;
-    }
-
     virtual QString getInfo(void) const
     {
-        int c = mLen > 16 ? 16 : mLen;
-
-        return toHex(mPkt, c);
+        return QString("Ethernet packet of type 0x%1").arg(ntohs(etherHeader->ether_type), 0, 16);
     }
 
 private:
-    timeval mTs;
-    uint32_t mLen;
-    char *mPkt;
+    const char *packet;
+    uint32_t length;
+    timeval timestamp;
 
     const ether_header *etherHeader;
     const char *etherPayload;
+
+    PacketInfo(const char *pkt, uint32_t len, const timeval &ts)
+        : packet(pkt), length(len), timestamp(ts)
+    {
+        etherHeader = (ether_header*)packet;
+        etherPayload = packet + sizeof(ether_header);
+    }
+};
+
+class ARPPacketInfo : public PacketInfo
+{
+public:
+
+    static PacketInfo *parse(PacketInfo *info);
+
+    virtual QString getInfo(void) const
+    {
+        return QString("ARP packet");
+    }
+
+private:
+    ARPPacketInfo(PacketInfo &info)
+        : PacketInfo(info) {}
+};
+
+class IPv4PacketInfo : public PacketInfo
+{
+public:
+
+    static PacketInfo *parse(PacketInfo *info);
+
+    virtual QString getInfo(void) const
+    {
+        return QString("IPv4 packet");
+    }
+
+private:
+    IPv4PacketInfo(PacketInfo &info)
+        : PacketInfo(info) {}
+};
+
+class IPv6PacketInfo : public PacketInfo
+{
+public:
+
+    static PacketInfo *parse(PacketInfo *info);
+
+    virtual QString getInfo(void) const
+    {
+        return QString("IPv6 packet");
+    }
+
+private:
+    IPv6PacketInfo(PacketInfo &info)
+        : PacketInfo(info) {}
 };
 
 #endif // PACKET_H

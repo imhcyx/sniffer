@@ -67,7 +67,7 @@ void MainWindow::on_clearButton_clicked()
 
 void MainWindow::packetCaptured(PacketInfo *info)
 {
-    pktlist->appendPacket(*info);
+    pktlist->appendPacket(info);
 }
 
 void MainWindow::errorMsg(const char *msg)

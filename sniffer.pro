@@ -19,7 +19,8 @@ SOURCES += \
     capture.cpp \
     main.cpp \
     mainwindow.cpp \
-    model.cpp
+    model.cpp \
+    packet.cpp
 
 HEADERS += \
     capture.h \

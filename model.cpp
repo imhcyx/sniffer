@@ -46,15 +46,15 @@ QVariant PacketListModel::data(const QModelIndex &index, int role) const
     case Qt::DisplayRole:
         switch (index.column()) {
         case 0:
-            return mPktList[i].getTimestamp();
+            return mPktList[i]->getTimestamp();
         case 1:
-            return mPktList[i].getSource();
+            return mPktList[i]->getSource();
         case 2:
-            return mPktList[i].getDest();
+            return mPktList[i]->getDest();
         case 3:
-            return mPktList[i].getLen();
+            return mPktList[i]->getLen();
         case 4:
-            return mPktList[i].getInfo();
+            return mPktList[i]->getInfo();
         }
     case Qt::TextAlignmentRole:
         return int(Qt::AlignLeft | Qt::AlignVCenter);
@@ -77,7 +77,7 @@ QVariant PacketListModel::headerData(int section, Qt::Orientation orientation, i
     return QVariant();
 }
 
-void PacketListModel::appendPacket(const PacketInfo &pkt)
+void PacketListModel::appendPacket(PacketInfo *pkt)
 {
     layoutAboutToBeChanged();
     mPktList.append(pkt);

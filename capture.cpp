@@ -59,7 +59,7 @@ void CaptureThread::run(QString ifname)
     while (mRunning) {
         ret = pcap_next_ex(descr, &phdr, &packet);
         if (ret == 1) {
-            PacketInfo *info = new PacketInfo(phdr->caplen, packet, phdr->ts);
+            PacketInfo *info = PacketInfo::parse(packet, phdr->caplen, phdr->ts);
             emit packetCaptured(info);
         }
         else if (ret) {
