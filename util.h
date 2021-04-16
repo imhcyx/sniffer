@@ -3,6 +3,8 @@
 
 #include <QString>
 
+#include <arpa/inet.h>
+
 static QString toHex(const void *data, int len, char delimiter = ' ') {
     QString res;
     char buf[4], *p;
@@ -23,8 +25,13 @@ static QString toHex(const void *data, int len, char delimiter = ' ') {
 }
 
 static QString ipv4Str(const void *addr) {
-    const uint8_t *p = (const uint8_t*)addr;
-    return QString("%1.%2.%3.%4").arg(p[0]).arg(p[1]).arg(p[2]).arg(p[3]);
+    char buf[16];
+    return inet_ntop(AF_INET, addr, buf, 16);
+}
+
+static QString ipv6Str(const void *addr) {
+    char buf[40];
+    return inet_ntop(AF_INET6, addr, buf, 40);
 }
 
 #endif // UTIL_H

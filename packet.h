@@ -7,6 +7,9 @@
 
 #include <net/ethernet.h>
 #include <arpa/inet.h>
+#include <linux/ipv6.h>
+
+#include <memory>
 
 #define ARPOP_REQUEST 1
 #define ARPOP_REPLY 2
@@ -67,12 +70,6 @@ public:
 
     static PacketInfo *parse(const void *pkt, uint32_t len, const timeval &ts);
 
-    ~PacketInfo(void)
-    {
-        // TODO: free resource somewhere
-        //delete [] packet;
-    }
-
     QString getTimestamp(void) const
     {
         return QString("%1.%2")
@@ -101,7 +98,7 @@ public:
     }
 
 protected:
-    const char *packet;
+    std::unique_ptr<const char> packet;
     uint32_t length;
     timeval timestamp;
 
@@ -111,8 +108,14 @@ protected:
     PacketInfo(const char *pkt, uint32_t len, const timeval &ts)
         : packet(pkt), length(len), timestamp(ts)
     {
-        etherHeader = (ether_header*)packet;
-        etherPayload = packet + sizeof(ether_header);
+        etherHeader = (ether_header*)pkt;
+        etherPayload = pkt + sizeof(ether_header);
+    }
+
+    PacketInfo(PacketInfo *info)
+        : PacketInfo(info->packet.release(), info->length, info->timestamp)
+    {
+        delete info;
     }
 };
 
@@ -141,7 +144,7 @@ protected:
     const ether_arp *arpHeader;
     const char *arpPayload;
 
-    ARPPacketInfo(PacketInfo &info)
+    ARPPacketInfo(PacketInfo *info)
         : PacketInfo(info)
     {
         arpHeader = (ether_arp*)etherPayload;
@@ -157,28 +160,49 @@ public:
 
     virtual QString getSource(void) const
     {
-        return ipv4Str(&ipHeader->saddr);
+        if (isipv6)
+            return ipv6Str(&ipv6Header->saddr);
+        else
+            return ipv4Str(&ipv4Header->saddr);
     }
 
     virtual QString getDest(void) const
     {
-        return ipv4Str(&ipHeader->daddr);
+        if (isipv6)
+            return ipv6Str(&ipv6Header->daddr);
+        else
+            return ipv4Str(&ipv4Header->daddr);
     }
 
     virtual QString getInfo(void) const
     {
-        return QString("IPv4 packet of type 0x%1").arg(ipHeader->protocol, 0, 16);
+        if (isipv6)
+            return QString("IPv6 packet of type 0x%1").arg(ipv6Header->nexthdr, 0, 16);
+        else
+            return QString("IPv4 packet of type 0x%1").arg(ipv4Header->protocol, 0, 16);
     }
 
 protected:
-    const iphdr *ipHeader;
+    bool isipv6;
+    union {
+        const iphdr *ipv4Header;
+        const ipv6hdr *ipv6Header;
+    };
     const char *ipPayload;
 
-    IPPacketInfo(PacketInfo &info)
+    IPPacketInfo(PacketInfo *info)
         : PacketInfo(info)
     {
-        ipHeader = (iphdr*)etherPayload;
-        ipPayload = etherPayload + (ipHeader->ihl << 2);
+        if (ntohs(etherHeader->ether_type) == ETHERTYPE_IPV6) {
+            isipv6 = true;
+            ipv6Header = (ipv6hdr*)etherPayload;
+            ipPayload = etherPayload + sizeof(ipv6hdr);
+        }
+        else {
+            isipv6 = false;
+            ipv4Header = (iphdr*)etherPayload;
+            ipPayload = etherPayload + (ipv4Header->ihl << 2);
+        }
     }
 };
 
@@ -212,7 +236,7 @@ protected:
     const icmphdr *icmpHeader;
     const char *icmpPayload;
 
-    ICMPPacketInfo(PacketInfo &info)
+    ICMPPacketInfo(PacketInfo *info)
         : IPPacketInfo(info)
     {
         icmpHeader = (icmphdr*)ipPayload;
@@ -223,7 +247,6 @@ protected:
 class TCPPacketInfo : public IPPacketInfo
 {
 public:
-
     static PacketInfo *parse(PacketInfo *info);
 
     virtual QString getInfo(void) const
@@ -232,14 +255,13 @@ public:
     }
 
 protected:
-    TCPPacketInfo(PacketInfo &info)
+    TCPPacketInfo(PacketInfo *info)
         : IPPacketInfo(info) {}
 };
 
 class UDPPacketInfo : public IPPacketInfo
 {
 public:
-
     static PacketInfo *parse(PacketInfo *info);
 
     virtual QString getInfo(void) const
@@ -248,24 +270,8 @@ public:
     }
 
 protected:
-    UDPPacketInfo(PacketInfo &info)
+    UDPPacketInfo(PacketInfo *info)
         : IPPacketInfo(info) {}
-};
-
-class IPv6PacketInfo : public PacketInfo
-{
-public:
-
-    static PacketInfo *parse(PacketInfo *info);
-
-    virtual QString getInfo(void) const
-    {
-        return QString("IPv6 packet");
-    }
-
-protected:
-    IPv6PacketInfo(PacketInfo &info)
-        : PacketInfo(info) {}
 };
 
 #endif // PACKET_H

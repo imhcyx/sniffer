@@ -7,7 +7,7 @@ typedef PacketInfo *(*ParserFunc)(PacketInfo *);
 const std::map<uint16_t, ParserFunc> etherParsers = {
     {ETHERTYPE_ARP,     &ARPPacketInfo::parse},
     {ETHERTYPE_IP,      &IPPacketInfo::parse},
-    {ETHERTYPE_IPV6,    &IPv6PacketInfo::parse},
+    {ETHERTYPE_IPV6,    &IPPacketInfo::parse},
 };
 
 const std::map<uint16_t, ParserFunc> ipParsers = {
@@ -33,16 +33,19 @@ PacketInfo *PacketInfo::parse(const void *pkt, uint32_t len, const timeval &ts)
 
 PacketInfo *ARPPacketInfo::parse(PacketInfo *info)
 {
-    ARPPacketInfo *p = new ARPPacketInfo(*info);
+    ARPPacketInfo *p = new ARPPacketInfo(info);
     return p;
 }
 
 PacketInfo *IPPacketInfo::parse(PacketInfo *info)
 {
-    IPPacketInfo *p = new IPPacketInfo(*info);
+    IPPacketInfo *p = new IPPacketInfo(info);
 
     try {
-        ParserFunc parser = ipParsers.at(p->ipHeader->protocol);
+        uint8_t protocol = p->isipv6 ?
+                    p->ipv6Header->nexthdr :
+                    p->ipv4Header->protocol;
+        ParserFunc parser = ipParsers.at(protocol);
         return parser(p);
     }
     catch (const std::out_of_range &e) {}
@@ -52,24 +55,18 @@ PacketInfo *IPPacketInfo::parse(PacketInfo *info)
 
 PacketInfo *ICMPPacketInfo::parse(PacketInfo *info)
 {
-    ICMPPacketInfo *p = new ICMPPacketInfo(*info);
+    ICMPPacketInfo *p = new ICMPPacketInfo(info);
     return p;
 }
 
 PacketInfo *TCPPacketInfo::parse(PacketInfo *info)
 {
-    TCPPacketInfo *p = new TCPPacketInfo(*info);
+    TCPPacketInfo *p = new TCPPacketInfo(info);
     return p;
 }
 
 PacketInfo *UDPPacketInfo::parse(PacketInfo *info)
 {
-    UDPPacketInfo *p = new UDPPacketInfo(*info);
-    return p;
-}
-
-PacketInfo *IPv6PacketInfo::parse(PacketInfo *info)
-{
-    IPv6PacketInfo *p = new IPv6PacketInfo(*info);
+    UDPPacketInfo *p = new UDPPacketInfo(info);
     return p;
 }
