@@ -344,6 +344,28 @@ class UDPPacketInfo : public IPPacketInfo
 public:
     static PacketInfo *parse(PacketInfo *info);
 
+    virtual QString getSource(void) const
+    {
+        if (isipv6)
+            return QString("[") +
+                    ipv6Str(&ipv6Header->saddr) +
+                    QString("]:%1").arg(ntohs(udpHeader->source));
+        else
+            return ipv4Str(&ipv4Header->saddr) +
+                    QString(":%1").arg(ntohs(udpHeader->source));
+    }
+
+    virtual QString getDest(void) const
+    {
+        if (isipv6)
+            return QString("[") +
+                    ipv6Str(&ipv6Header->daddr) +
+                    QString("]:%1").arg(ntohs(udpHeader->dest));
+        else
+            return ipv4Str(&ipv4Header->daddr) +
+                    QString(":%1").arg(ntohs(udpHeader->dest));
+    }
+
     virtual QString getProto(void) const
     {
         return QString("UDP");
@@ -355,8 +377,15 @@ public:
     }
 
 protected:
+    const udphdr *udpHeader;
+    const char *udpPayload;
+
     UDPPacketInfo(PacketInfo *info)
-        : IPPacketInfo(info) {}
+        : IPPacketInfo(info)
+    {
+        udpHeader = (const udphdr*)ipPayload;
+        udpPayload = ipPayload + sizeof(udphdr);
+    }
 };
 
 #endif // PACKET_H
