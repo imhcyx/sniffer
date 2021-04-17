@@ -5,6 +5,7 @@ static QString mColumnStrings[] = {
     QString("Source"),
     QString("Destination"),
     QString("Length"),
+    QString("Protocol"),
     QString("Data")
 };
 
@@ -54,6 +55,8 @@ QVariant PacketListModel::data(const QModelIndex &index, int role) const
         case 3:
             return mPktList[i]->getLen();
         case 4:
+            return mPktList[i]->getProto();
+        case 5:
             return mPktList[i]->getInfo();
         }
     case Qt::TextAlignmentRole:

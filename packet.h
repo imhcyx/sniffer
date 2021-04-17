@@ -11,6 +11,8 @@
 #include <linux/ipv6.h>
 #include <linux/icmp.h>
 #include <linux/icmpv6.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
 
 #include <memory>
 
@@ -58,9 +60,15 @@ public:
         return toHex(etherHeader->ether_dhost, 6, ':');
     }
 
+    virtual QString getProto(void) const
+    {
+        return QString("Ethernet");
+    }
+
     virtual QString getInfo(void) const
     {
-        return QString("Ethernet packet of type 0x%1").arg(ntohs(etherHeader->ether_type), 0, 16);
+        return QString("type=0x%1")
+                .arg(ntohs(etherHeader->ether_type), 0, 16);
     }
 
 protected:
@@ -90,6 +98,11 @@ class ARPPacketInfo : public PacketInfo
 public:
 
     static PacketInfo *parse(PacketInfo *info);
+
+    virtual QString getProto(void) const
+    {
+        return QString("ARP");
+    }
 
     virtual QString getInfo(void) const
     {
@@ -140,12 +153,20 @@ public:
             return ipv4Str(&ipv4Header->daddr);
     }
 
+    virtual QString getProto(void) const
+    {
+        if (isipv6)
+            return QString("IPv6");
+        else
+            return QString("IPv4");
+    }
+
     virtual QString getInfo(void) const
     {
         if (isipv6)
-            return QString("IPv6 packet of type 0x%1").arg(ipv6Header->nexthdr, 0, 16);
+            return QString("type=0x%1").arg(ipv6Header->nexthdr, 0, 16);
         else
-            return QString("IPv4 packet of type 0x%1").arg(ipv4Header->protocol, 0, 16);
+            return QString("type=0x%1").arg(ipv4Header->protocol, 0, 16);
     }
 
 protected:
@@ -178,6 +199,11 @@ public:
 
     static PacketInfo *parse(PacketInfo *info);
 
+    virtual QString getProto(void) const
+    {
+        return QString("ICMP");
+    }
+
     virtual QString getInfo(void) const
     {
         const char *type;
@@ -189,13 +215,13 @@ public:
             case ICMP_NET_UNREACH:  type = "net unreach";       break;
             case ICMP_HOST_UNREACH: type = "host unreach";      break;
             default:
-                return QString("ICMP dest unreach of code 0x%1")
+                return QString("ICMP dest unreach code=0x%1")
                         .arg(icmpHeader->code, 0, 16);
             }
             break;
         case ICMP_TIME_EXCEEDED:    type = "time exceeded";     break;
         default:
-            return QString("ICMP packet of type 0x%1")
+            return QString("type=0x%1")
                     .arg(icmpHeader->type, 0, 16);
         }
 
@@ -220,6 +246,11 @@ public:
 
     static PacketInfo *parse(PacketInfo *info);
 
+    virtual QString getProto(void) const
+    {
+        return QString("ICMPv6");
+    }
+
     virtual QString getInfo(void) const
     {
         const char *type;
@@ -230,14 +261,14 @@ public:
             case ICMPV6_ADDR_UNREACH:   type = "addr unreach";  break;
             case ICMPV6_PORT_UNREACH:   type = "port unreach";  break;
             default:
-                return QString("ICMPv6 dest unreach of code 0x%1")
+                return QString("ICMPv6 dest unreach code=0x%1")
                         .arg(icmpv6Header->icmp6_code, 0, 16);
             }
         case ICMPV6_TIME_EXCEED:        type = "time exceeded"; break;
         case ICMPV6_ECHO_REQUEST:       type = "echo request";  break;
         case ICMPV6_ECHO_REPLY:         type = "echo reply";    break;
         default:
-            return QString("ICMPv6 packet of type 0x%1")
+            return QString("type=0x%1")
                     .arg(icmpv6Header->icmp6_type, 0, 16);
         }
 
@@ -261,20 +292,62 @@ class TCPPacketInfo : public IPPacketInfo
 public:
     static PacketInfo *parse(PacketInfo *info);
 
+    virtual QString getSource(void) const
+    {
+        if (isipv6)
+            return QString("[") +
+                    ipv6Str(&ipv6Header->saddr) +
+                    QString("]:%1").arg(ntohs(tcpHeader->source));
+        else
+            return ipv4Str(&ipv4Header->saddr) +
+                    QString(":%1").arg(ntohs(tcpHeader->source));
+    }
+
+    virtual QString getDest(void) const
+    {
+        if (isipv6)
+            return QString("[") +
+                    ipv6Str(&ipv6Header->daddr) +
+                    QString("]:%1").arg(ntohs(tcpHeader->dest));
+        else
+            return ipv4Str(&ipv4Header->daddr) +
+                    QString(":%1").arg(ntohs(tcpHeader->dest));
+    }
+
+    virtual QString getProto(void) const
+    {
+        return QString("TCP");
+    }
+
     virtual QString getInfo(void) const
     {
-        return QString("TCP packet");
+        return QString("%1 seq=%2 ackseq=%3")
+                .arg(tcpFlagStr(tcpHeader))
+                .arg(ntohl(tcpHeader->seq))
+                .arg(ntohl(tcpHeader->ack_seq));
     }
 
 protected:
+    const tcphdr *tcpHeader;
+    const char *tcpPayload;
+
     TCPPacketInfo(PacketInfo *info)
-        : IPPacketInfo(info) {}
+        : IPPacketInfo(info)
+    {
+        tcpHeader = (const tcphdr*)ipPayload;
+        tcpPayload = ipPayload + (tcpHeader->doff << 2);
+    }
 };
 
 class UDPPacketInfo : public IPPacketInfo
 {
 public:
     static PacketInfo *parse(PacketInfo *info);
+
+    virtual QString getProto(void) const
+    {
+        return QString("UDP");
+    }
 
     virtual QString getInfo(void) const
     {

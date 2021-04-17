@@ -13,7 +13,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pktView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
     ui->pktView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
     ui->pktView->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
-    ui->pktView->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);
+    ui->pktView->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
+    ui->pktView->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Stretch);
 
     QList<QString> ifList = getCaptureIfs(this);
     ui->ifaceCombo->addItems(ifList);
