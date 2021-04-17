@@ -12,6 +12,7 @@ const std::map<uint16_t, ParserFunc> etherParsers = {
 
 const std::map<uint16_t, ParserFunc> ipParsers = {
     {IPPROTO_ICMP,      &ICMPPacketInfo::parse},
+    {IPPROTO_ICMPV6,    &ICMPv6PacketInfo::parse},
     {IPPROTO_TCP,       &TCPPacketInfo::parse},
     {IPPROTO_UDP,       &UDPPacketInfo::parse},
 };
@@ -56,6 +57,12 @@ PacketInfo *IPPacketInfo::parse(PacketInfo *info)
 PacketInfo *ICMPPacketInfo::parse(PacketInfo *info)
 {
     ICMPPacketInfo *p = new ICMPPacketInfo(info);
+    return p;
+}
+
+PacketInfo *ICMPv6PacketInfo::parse(PacketInfo *info)
+{
+    ICMPv6PacketInfo *p = new ICMPv6PacketInfo(info);
     return p;
 }
 

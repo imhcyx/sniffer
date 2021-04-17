@@ -9,6 +9,11 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     ui->pktView->setModel(pktlist);
+    ui->pktView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    ui->pktView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->pktView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    ui->pktView->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    ui->pktView->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);
 
     QList<QString> ifList = getCaptureIfs(this);
     ui->ifaceCombo->addItems(ifList);
@@ -68,6 +73,8 @@ void MainWindow::on_clearButton_clicked()
 void MainWindow::packetCaptured(PacketInfo *info)
 {
     pktlist->appendPacket(info);
+    if (ui->checkScroll->isChecked())
+        ui->pktView->scrollToBottom();
 }
 
 void MainWindow::errorMsg(const char *msg)
