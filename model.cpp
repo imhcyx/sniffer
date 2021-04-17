@@ -87,6 +87,11 @@ void PacketListModel::appendPacket(PacketInfo *pkt)
     layoutChanged();
 }
 
+PacketInfo &PacketListModel::getPacket(const QModelIndex &index)
+{
+    return *mPktList[index.row()];
+}
+
 void PacketListModel::clear()
 {
     layoutAboutToBeChanged();

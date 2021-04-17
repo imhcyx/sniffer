@@ -5,6 +5,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , pktlist(new PacketListModel(parent))
+    , detaillist(new QStringListModel(parent))
 {
     ui->setupUi(this);
 
@@ -15,6 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pktView->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     ui->pktView->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
     ui->pktView->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Stretch);
+
+    ui->detailView->setModel(detaillist);
 
     QList<QString> ifList = getCaptureIfs(this);
     ui->ifaceCombo->addItems(ifList);
@@ -38,6 +41,7 @@ MainWindow::~MainWindow()
     thread->wait();
     delete cap;
     delete thread;
+    delete detaillist;
     delete pktlist;
     delete ui;
 }
@@ -93,4 +97,11 @@ void MainWindow::stateChanged(bool state)
     ui->stopButton->setEnabled(state);
 
     running = state;
+}
+
+void MainWindow::on_pktView_clicked(const QModelIndex &index)
+{
+    PacketInfo &info = pktlist->getPacket(index);
+    QStringList detail = info.walkDetail();
+    detaillist->setStringList(detail);
 }

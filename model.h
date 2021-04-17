@@ -20,6 +20,7 @@ public:
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
 
     void appendPacket(PacketInfo *pkt);
+    PacketInfo &getPacket(const QModelIndex &index);
     void clear();
 
 private:

@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QTime>
 #include <QThread>
+#include <QStringListModel>
 
 #include "model.h"
 #include "capture.h"
@@ -26,17 +27,20 @@ signals:
     void stopCapture();
 
 private slots:
-    void on_startButton_clicked();
-    void on_stopButton_clicked();
-    void on_clearButton_clicked();
 
     void packetCaptured(PacketInfo *info);
     void errorMsg(const char *msg);
     void stateChanged(bool state);
 
+    void on_startButton_clicked();
+    void on_stopButton_clicked();
+    void on_clearButton_clicked();
+    void on_pktView_clicked(const QModelIndex &index);
+
 private:
     Ui::MainWindow *ui;
     PacketListModel *pktlist;
+    QStringListModel *detaillist;
     CaptureThread *cap;
     QThread *thread;
     bool running;
