@@ -69,7 +69,32 @@ PacketInfo *ICMPv6PacketInfo::parse(PacketInfo *info)
 PacketInfo *TCPPacketInfo::parse(PacketInfo *info)
 {
     TCPPacketInfo *p = new TCPPacketInfo(info);
+
+    if (HTTPRequest *r = HTTPRequest::parse(p->tcpPayload)) {
+        return HTTPPacketInfo::req(p, r);
+    }
+
+    if (HTTPResponse *r = HTTPResponse::parse(p->tcpPayload)) {
+        return HTTPPacketInfo::resp(p, r);
+    }
+
     return p;
+}
+
+PacketInfo *HTTPPacketInfo::req(PacketInfo *info, HTTPRequest *r)
+{
+    HTTPPacketInfo *http = new HTTPPacketInfo(info, r);
+    http->ishttprequest = true;
+
+    return http;
+}
+
+PacketInfo *HTTPPacketInfo::resp(PacketInfo *info, HTTPResponse *r)
+{
+    HTTPPacketInfo *http = new HTTPPacketInfo(info, r);
+    http->ishttprequest = false;
+
+    return http;
 }
 
 PacketInfo *UDPPacketInfo::parse(PacketInfo *info)

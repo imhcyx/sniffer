@@ -59,6 +59,7 @@ QVariant PacketListModel::data(const QModelIndex &index, int role) const
         case 5:
             return mPktList[i]->getInfo();
         }
+        break;
     case Qt::TextAlignmentRole:
         return int(Qt::AlignLeft | Qt::AlignVCenter);
     default:

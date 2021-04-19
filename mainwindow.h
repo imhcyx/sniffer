@@ -7,6 +7,8 @@
 #include <QThread>
 #include <QStringListModel>
 
+#include "QHexView.h"
+
 #include "model.h"
 #include "capture.h"
 
@@ -39,6 +41,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    QHexView *hexView;
     PacketListModel *pktlist;
     QStringListModel *detaillist;
     CaptureThread *cap;

@@ -5,6 +5,7 @@
 #include <QStringList>
 
 #include "util.h"
+#include "http.h"
 
 #include <net/ethernet.h>
 #include <arpa/inet.h>
@@ -38,6 +39,10 @@ public:
     static PacketInfo *parse(const void *pkt, uint32_t len, const timeval &ts);
 
     virtual ~PacketInfo() {}
+
+    QByteArray getData() {
+        return QByteArray(packet.get(), length);
+    }
 
     QString getTimestamp(void) const
     {
@@ -318,6 +323,7 @@ public:
                 return QString("ICMPv6 dest unreach code=0x%1")
                         .arg(icmpv6Header->icmp6_code, 0, 16);
             }
+            break;
         case ICMPV6_TIME_EXCEED:        type = "time exceeded"; break;
         case ICMPV6_ECHO_REQUEST:       type = "echo request";  break;
         case ICMPV6_ECHO_REPLY:         type = "echo reply";    break;
@@ -483,6 +489,56 @@ protected:
         udpHeader = (const udphdr*)ipPayload;
         udpPayload = ipPayload + sizeof(udphdr);
     }
+};
+
+class HTTPPacketInfo : public TCPPacketInfo
+{
+public:
+    static PacketInfo *req(PacketInfo *info, HTTPRequest *r);
+    static PacketInfo *resp(PacketInfo *info, HTTPResponse *r);
+
+    virtual QString getProto(void) const
+    {
+        return QString("HTTP");
+    }
+
+    virtual QString getInfo(void) const
+    {
+        if (ishttprequest)
+            return QString("%1 %2 %3 Host: %4")
+                    .arg(QString::fromStdString(httpreq->getMethod()))
+                    .arg(QString::fromStdString(httpreq->getURI()))
+                    .arg(QString::fromStdString(httpreq->getVersion()))
+                    .arg(QString::fromStdString(httpreq->getHost()));
+        else
+            return QString("%1 %2 %3")
+                    .arg(QString::fromStdString(httpresp->getVersion()))
+                    .arg(QString::fromStdString(httpresp->getCode()))
+                    .arg(QString::fromStdString(httpresp->getMessage()));
+    }
+
+    virtual QString getDetail(void) const
+    {
+        return HTTPPacketInfo::getInfo();
+    }
+
+    virtual QStringList walkDetail(void) const
+    {
+        QStringList res = TCPPacketInfo::walkDetail();
+        res.append(HTTPPacketInfo::getDetail());
+        return res;
+    }
+
+protected:
+    bool ishttprequest;
+    std::unique_ptr<HTTPRequest> httpreq;
+    std::unique_ptr<HTTPResponse> httpresp;
+
+    HTTPPacketInfo(PacketInfo *info, HTTPRequest *r)
+        : TCPPacketInfo(info), ishttprequest(true), httpreq(r) {}
+
+    HTTPPacketInfo(PacketInfo *info, HTTPResponse *r)
+        : TCPPacketInfo(info), ishttprequest(false), httpresp(r) {}
 };
 
 #endif // PACKET_H

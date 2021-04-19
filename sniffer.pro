@@ -16,14 +16,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    QHexView.cpp \
     capture.cpp \
+    http.cpp \
     main.cpp \
     mainwindow.cpp \
     model.cpp \
     packet.cpp
 
 HEADERS += \
+    QHexView.h \
     capture.h \
+    http.h \
     mainwindow.h \
     model.h \
     packet.h \

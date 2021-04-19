@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     , detaillist(new QStringListModel(parent))
 {
     ui->setupUi(this);
+    hexView = new QHexView(ui->bottomSpillter);
 
     ui->pktView->setModel(pktlist);
     ui->pktView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -43,6 +44,7 @@ MainWindow::~MainWindow()
     delete thread;
     delete detaillist;
     delete pktlist;
+    delete hexView;
     delete ui;
 }
 
@@ -104,4 +106,7 @@ void MainWindow::on_pktView_clicked(const QModelIndex &index)
     PacketInfo &info = pktlist->getPacket(index);
     QStringList detail = info.walkDetail();
     detaillist->setStringList(detail);
+    QByteArray arr(info.getData());
+    hexView->setData(new QHexView::DataStorageArray(arr));
+    hexView->viewport()->update();
 }
