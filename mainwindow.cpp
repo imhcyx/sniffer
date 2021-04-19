@@ -20,7 +20,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->detailView->setModel(detaillist);
 
-    QList<QString> ifList = getCaptureIfs(this);
+    ui->filterCombo->addItems(FilterNameList);
+
+    QStringList ifList = getCaptureIfs(this);
     ui->ifaceCombo->addItems(ifList);
 
     cap = new CaptureThread();
@@ -109,4 +111,9 @@ void MainWindow::on_pktView_clicked(const QModelIndex &index)
     QByteArray arr(info.getData());
     hexView->setData(new QHexView::DataStorageArray(arr));
     hexView->viewport()->update();
+}
+
+void MainWindow::on_filterCombo_currentTextChanged(const QString &arg1)
+{
+    pktlist->applyFilter(FilterFuncList[ui->filterCombo->currentIndex()]);
 }

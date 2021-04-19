@@ -32,7 +32,7 @@ QModelIndex PacketListModel::parent(const QModelIndex &child) const
 
 int PacketListModel::rowCount(const QModelIndex &parent) const
 {
-    return mPktList.size();
+    return mFilteredList.size();
 }
 
 int PacketListModel::columnCount(const QModelIndex &parent) const
@@ -47,17 +47,17 @@ QVariant PacketListModel::data(const QModelIndex &index, int role) const
     case Qt::DisplayRole:
         switch (index.column()) {
         case 0:
-            return mPktList[i]->getTimestamp();
+            return mFilteredList[i]->getTimestamp();
         case 1:
-            return mPktList[i]->getSource();
+            return mFilteredList[i]->getSource();
         case 2:
-            return mPktList[i]->getDest();
+            return mFilteredList[i]->getDest();
         case 3:
-            return mPktList[i]->getLen();
+            return mFilteredList[i]->getLen();
         case 4:
-            return mPktList[i]->getProto();
+            return mFilteredList[i]->getProto();
         case 5:
-            return mPktList[i]->getInfo();
+            return mFilteredList[i]->getInfo();
         }
         break;
     case Qt::TextAlignmentRole:
@@ -81,10 +81,23 @@ QVariant PacketListModel::headerData(int section, Qt::Orientation orientation, i
     return QVariant();
 }
 
+void PacketListModel::applyFilter(FilterFunc filter)
+{
+    layoutAboutToBeChanged();
+    mFilter = filter;
+    mFilteredList.clear();
+    for (PacketInfo *p : mPktList)
+        if (!mFilter || mFilter(p))
+            mFilteredList.append(p);
+    layoutChanged();
+}
+
 void PacketListModel::appendPacket(PacketInfo *pkt)
 {
     layoutAboutToBeChanged();
     mPktList.append(pkt);
+    if (!mFilter || mFilter(pkt))
+        mFilteredList.append(pkt);
     layoutChanged();
 }
 
@@ -97,5 +110,6 @@ void PacketListModel::clear()
 {
     layoutAboutToBeChanged();
     mPktList.clear();
+    mFilteredList.clear();
     layoutChanged();
 }

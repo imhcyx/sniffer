@@ -11,6 +11,7 @@
 
 #include "model.h"
 #include "capture.h"
+#include "filter.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -38,6 +39,7 @@ private slots:
     void on_stopButton_clicked();
     void on_clearButton_clicked();
     void on_pktView_clicked(const QModelIndex &index);
+    void on_filterCombo_currentTextChanged(const QString &arg1);
 
 private:
     Ui::MainWindow *ui;

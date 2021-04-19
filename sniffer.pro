@@ -18,6 +18,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     QHexView.cpp \
     capture.cpp \
+    filter.cpp \
     http.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -27,6 +28,7 @@ SOURCES += \
 HEADERS += \
     QHexView.h \
     capture.h \
+    filter.h \
     http.h \
     mainwindow.h \
     model.h \

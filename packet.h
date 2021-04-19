@@ -216,6 +216,8 @@ public:
         return res;
     }
 
+    bool isIPv6() { return isipv6; }
+
 protected:
     bool isipv6;
     union {

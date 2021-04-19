@@ -19,12 +19,16 @@ public:
     virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
 
+    typedef bool(*FilterFunc)(PacketInfo*);
+
+    void applyFilter(FilterFunc filter);
     void appendPacket(PacketInfo *pkt);
     PacketInfo &getPacket(const QModelIndex &index);
     void clear();
 
 private:
-    QList<PacketInfo*> mPktList;
+    QList<PacketInfo*> mPktList, mFilteredList;
+    FilterFunc mFilter;
 };
 
 #endif // MODEL_H
