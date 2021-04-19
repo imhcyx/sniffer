@@ -1,0 +1,2 @@
+QHexView
+https://github.com/virinext/QHexView
