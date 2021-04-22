@@ -103,7 +103,7 @@ void PacketListModel::appendPacket(PacketInfo *pkt)
 
 PacketInfo &PacketListModel::getPacket(const QModelIndex &index)
 {
-    return *mPktList[index.row()];
+    return *mFilteredList[index.row()];
 }
 
 void PacketListModel::clear()
